@@ -12,7 +12,10 @@ db = SQLALCHEMY_DATABASE_URI
 
 # Return device id : fisrt match between  caracters - and _
 match = re.search(r'\-(.*?)\_', file_name)
-device_id = match.group(1)
+if match:
+    device_id = match.group(1)
+else:
+    print(f"le nom du fichier {file_name} ne correspond pas au motif attendu")
 
 
 def validate(line):

@@ -11,7 +11,7 @@ animals = Blueprint('animals', __name__)
 
 
 @animals.route('/api/animals', methods=['GET'])
-@fnauth.check_auth(4)
+@fnauth.check_auth(4) ## enlever la protection auth4 = admin pour les appels dans GPS3V
 def get_animals():
     try:
         key = request.args.get("key")
@@ -32,7 +32,7 @@ def get_animals():
 
 
 @animals.route('/api/animals', methods=['POST'])
-@fnauth.check_auth(4)
+@fnauth.check_auth(4) ## laisser la protection pour POST
 def save_animals():
     try:
         payload = request.get_json()
