@@ -6,7 +6,6 @@ DUPLICATE_KEY_ERROR_REGEX = r'DETAIL:\s+Key \((?P<duplicate_key>.*)\)=\(.*\) alr
 
 db = SQLAlchemy()
 
-
 class Animal(db.Model):
 
     __tablename__ = 't_animals'
@@ -18,10 +17,13 @@ class Animal(db.Model):
     capture_date = db.Column(db.DateTime)
     death_date = db.Column(db.DateTime,  nullable=True)
     comment = db.Column(db.Text())
+    id_espece = db.Column(db.Integer(), db.ForeignKey(
+        'followdem.t_especes.id_espece'), nullable=True)
     animal_devices = db.relationship('AnimalDevice', backref='animals',
                                      cascade="save-update, delete", lazy='dynamic', foreign_keys='AnimalDevice.id_animal')
     animal_attributes = db.relationship('AnimalAttribute', backref='animals',
                                         cascade="save-update, delete",  lazy='dynamic', foreign_keys='AnimalAttribute.id_animal')
+    
 
     def json(self):
         return {
@@ -31,8 +33,9 @@ class Animal(db.Model):
             'capture_date': self.capture_date.strftime('%Y-%m-%d'),
             'death_date': self.death_date.strftime('%Y-%m-%d') if self.death_date else None ,
             'comment': self.comment,
+            'id_espece': self.id_espece,
             'animal_devices': [animal_device.json() for animal_device in self.animal_devices],
-            'animal_attributes': [animal_attribute.json() for animal_attribute in self.animal_attributes],
+            'animal_attributes': [animal_attribute.json() for animal_attribute in self.animal_attributes]
         }
 
 
@@ -162,7 +165,31 @@ class Gps_data(db.Model):
 
     def json(self):
         return {
-            'id_gps_data': self.id_gps_data
+            'id_gps_data': self.id_gps_data,
+            'gps_date': self.gps_date,
+            'latitude': self.latitude,
+            'longitude': self.longitude,
+            'altitude': self.altitude
+        }
+    
+class Espece(db.Model):
+
+    __tablename__ = 't_especes'
+    __table_args__ = {'extend_existing': True, u'schema': 'followdem'}
+
+    id_espece = db.Column(db.Interger(), primary_key=True)
+    cd_nom = db.Column(db.String(50))
+    lb_nom = db.Column(db.String(50))
+    nom_vern = db.Column(db.String(50))
+    lien_img = db.Column(db.Text())
+
+    def json(self):
+        return {
+            'id_espece': self.id_espece,
+            'cd_nom': self.cd_nom,
+            'lb_nom': self.lb_nom,
+            'nom_vern': self.nom_vern,
+            'lien_img':self.lien_img
         }
 
 

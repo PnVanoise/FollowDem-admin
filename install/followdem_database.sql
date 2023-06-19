@@ -62,6 +62,7 @@ COMMENT ON TABLE followdem.cor_animal_devices IS 'Table de correspondance entre 
 CREATE TABLE followdem.t_animals (
     id_animal serial NOT NULL,
     name character varying(50) NOT NULL,
+    id_espece integer NOT NULL,
     birth_year integer,
     capture_date timestamp without time zone,
     death_date timestamp without time zone,
@@ -71,6 +72,19 @@ CREATE TABLE followdem.t_animals (
 
 COMMENT ON TABLE followdem.t_animals IS 'Table contenant les animaux';
 
+--
+-- Name: t_especes; Type: TABLE; Schema: followdem; Owner: followdem
+--
+
+CREATE TABLE followdem.t_especes (
+    id_espece serial NOT NULL,
+    cd_nom character varying(50),
+    lb_nom character varying(50),
+    nom_vern character varying(50),
+    lien_img text
+);
+
+COMMENT ON TABLE followdem.t_especes IS 'Table contenant les especes';
 
 --
 -- Name: lib_attributes; Type: TABLE; Schema: followdem; Owner: followdem
@@ -155,6 +169,9 @@ ALTER TABLE ONLY followdem.cor_animal_devices
 ALTER TABLE ONLY followdem.t_animals
     ADD CONSTRAINT t_animals_pkey PRIMARY KEY (id_animal);
 
+ALTER TABLE ONLY followdem.t_especes
+    ADD CONSTRAINT t_especes_pkey PRIMARY KEY (id_espece);
+
 ALTER TABLE ONLY followdem.lib_attributes
     ADD CONSTRAINT lib_attributes_pkey PRIMARY KEY (id_attribute);
 
@@ -180,11 +197,15 @@ CREATE UNIQUE INDEX device_type_idx ON followdem.lib_device_type (LOWER(device_t
 CREATE UNIQUE INDEX attribute_idx ON followdem.lib_attributes (LOWER(attribute));
 CREATE UNIQUE INDEX name_unique_idx ON followdem.t_animals (LOWER(name));
 CREATE UNIQUE INDEX ref_device_unique_idx ON followdem.t_devices (LOWER(ref_device));
+CREATE UNIQUE INDEX cd_nom_unique_idx ON followdem.t_especes (LOWER(cd_nom));
 
 
 -----------------
 -- FOREIGN KEY --
 -----------------
+
+ALTER TABLE ONLY followdem.t_animals
+    ADD CONSTRAINT t_animals_id_espece_fkey FOREIGN KEY (id_espece) REFERENCES followdem.t_especes(id_espece);
 
 ALTER TABLE ONLY followdem.cor_animal_attributes
     ADD CONSTRAINT cor_animal_attributes_id_animal_fkey FOREIGN KEY (id_animal) REFERENCES followdem.t_animals(id_animal);
