@@ -78,7 +78,7 @@ COMMENT ON TABLE followdem.t_animals IS 'Table contenant les animaux';
 
 CREATE TABLE followdem.t_especes (
     id_espece serial NOT NULL,
-    cd_nom character varying(50),
+    cd_nom character integer,
     lb_nom character varying(50),
     nom_vern character varying(50),
     lien_img text
@@ -225,3 +225,25 @@ ALTER TABLE ONLY followdem.t_devices
 
 ALTER TABLE ONLY followdem.t_gps_data
     ADD CONSTRAINT t_gps_data_id_device_fkey FOREIGN KEY (id_device) REFERENCES followdem.t_devices(id_device);
+
+
+----------
+-- VIEW --
+----------
+CREATE OR REPLACE VIEW followdem.v_animals_loc
+AS SELECT tgd.id_gps_data,
+    tgd.gps_date,
+    st_setsrid(st_makepoint(tgd.longitude::double precision, tgd.latitude::double precision), 4326) AS geom,
+    tgd.altitude,
+    ta.name,
+    ta.birth_year,
+    te.nom_vern,
+    array_agg((la.attribute::text || ':'::text) || caa.value::text) AS attributs
+   FROM followdem.t_gps_data tgd
+     JOIN followdem.cor_animal_devices cad ON cad.id_device = tgd.id_device AND tgd.gps_date >= cad.date_start AND tgd.gps_date <= COALESCE(cad.date_end::timestamp with time zone, now())
+     JOIN followdem.t_animals ta ON ta.id_animal = cad.id_animal
+     JOIN followdem.t_especes te ON te.id_espece = ta.id_espece
+     JOIN followdem.cor_animal_attributes caa ON caa.id_animal = ta.id_animal
+     JOIN followdem.lib_attributes la ON la.id_attribute = caa.id_attribute
+  WHERE ta.active IS TRUE
+  GROUP BY tgd.id_gps_data, tgd.gps_date, tgd.latitude, tgd.longitude, tgd.altitude, ta.name, ta.birth_year, te.nom_vern;

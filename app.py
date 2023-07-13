@@ -19,4 +19,4 @@ with app.app_context():
 def hello():
     return 'hello followDem-server !'
 
-app.run(host='5.196.111.112', port='5000')
+app.run(host='5.196.111.112', port='5000', debug=True)

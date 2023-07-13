@@ -17,6 +17,7 @@ class Animal(db.Model):
     capture_date = db.Column(db.DateTime)
     death_date = db.Column(db.DateTime,  nullable=True)
     comment = db.Column(db.Text())
+    active = db.Column(db.Boolean())
     id_espece = db.Column(db.Integer(), db.ForeignKey(
         'followdem.t_especes.id_espece'), nullable=True)
     animal_devices = db.relationship('AnimalDevice', backref='animals',
@@ -33,6 +34,7 @@ class Animal(db.Model):
             'capture_date': self.capture_date.strftime('%Y-%m-%d'),
             'death_date': self.death_date.strftime('%Y-%m-%d') if self.death_date else None ,
             'comment': self.comment,
+            'active': self.active,
             'id_espece': self.id_espece,
             'animal_devices': [animal_device.json() for animal_device in self.animal_devices],
             'animal_attributes': [animal_attribute.json() for animal_attribute in self.animal_attributes]
@@ -111,6 +113,7 @@ class AnimalDevice(db.Model):
     comment = db.Column(db.Text())
 
     device = db.relationship('Device')
+    animal = db.relationship('Animal')
 
     def json(self):
         return {
@@ -146,7 +149,7 @@ class AnimalAttribute(db.Model):
 
 class Gps_data(db.Model):
 
-    __tablename__ = 't_gps_data'
+    __tablename__ = 't_gps_data' ## vue
     __table_args__ = {'extend_existing': True, u'schema': 'followdem'}
 
     id_gps_data = db.Column(db.Integer(), primary_key=True)
@@ -156,17 +159,21 @@ class Gps_data(db.Model):
     ttf = db.Column(db.Integer())
     temperature = db.Column(db.Integer())
     sat_number = db.Column(db.Integer())
-    hadop = db.Column(db.Float())
+    hdop = db.Column(db.Float())
     latitude = db.Column(db.Float())
     longitude = db.Column(db.Float())
-    altitude = db.Column(db.Integer())
+    altitude = db.Column(db.Float())
     dimension = db.Column(db.String(50))
     accurate = db.Column(db.Boolean())
 
+    device = db.relationship('Device')
+
     def json(self):
+        print(type(self.latitude))
         return {
             'id_gps_data': self.id_gps_data,
-            'gps_date': self.gps_date,
+            'id_device': self.id_device,
+            'gps_date': str(self.gps_date),
             'latitude': self.latitude,
             'longitude': self.longitude,
             'altitude': self.altitude
@@ -177,7 +184,7 @@ class Espece(db.Model):
     __tablename__ = 't_especes'
     __table_args__ = {'extend_existing': True, u'schema': 'followdem'}
 
-    id_espece = db.Column(db.Interger(), primary_key=True)
+    id_espece = db.Column(db.Integer(), primary_key=True)
     cd_nom = db.Column(db.String(50))
     lb_nom = db.Column(db.String(50))
     nom_vern = db.Column(db.String(50))
@@ -207,4 +214,57 @@ class Logs(db.Model):
             'id_log': self.id_log,
             'date': self.date,
             'log': self.log
+        }
+    
+# Vue dans postgresql des localisations d'animaux actifs
+class AnimalsLoc(db.Model):
+    __tablename__ = 'v_animals_loc'
+    __table_args__ = {'extend_existing': True, u'schema': 'followdem'}
+
+    id_gps_data = db.Column(db.Integer(), primary_key=True)
+    gps_date = db.Column(db.DateTime)
+    altitude = db.Column(db.Float())
+    name = db.Column(db.String(50))
+    birth_year = db.Column(db.Integer())
+    nom_vern = db.Column(db.String(50))
+    attributs = db.Column(db.Text())
+    geom = db.Column(Geometry('POINT'))
+
+    def json(self):
+        return {
+            'id_gps_data': self.id_gps_data,
+            'gps_date': str(self.gps_date),
+            'altitude':self.altitude,
+            'name':self.name,
+            'birth_year':self.birth_year,
+            'nom_vern':self.nom_vern,
+            'attributs':self.attributs
+        }
+
+# Vue dans postgresql des animaux actifs avec attribut random color (pour éviter de l'intégrer en dur)
+class AnimalsColor(db.Model):
+
+    __tablename__ = 'v_animals'
+    __table_args__ = {'extend_existing': True, u'schema': 'followdem'}
+
+    id_animal = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    id_espece = db.Column(db.Integer())
+    birth_year = db.Column(db.Integer())
+    capture_date = db.Column(db.DateTime)
+    death_date = db.Column(db.DateTime,  nullable=True)
+    comment = db.Column(db.Text())
+    attributs = db.Column(db.Text())
+
+    def json(self):
+        return {
+            'id_animal':self.id_animal,
+            'name':self.name,
+            'id_espece':self.id_espece,
+            'birth_year':self.birth_year,
+            'capture_date':self.capture_date,
+            'death_date':self.death_date,
+            'comment':self.comment,
+            'attributs': self.attributs
+            #'attributs':[attribut.json() for attribut in self.attributs]
         }

@@ -1,0 +1,33 @@
+from flask import (Blueprint, jsonify, request)
+from models import db, Espece
+import traceback
+import json
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func, desc, or_
+from datetime import datetime
+from pypnusershub import routes as fnauth
+
+
+especes = Blueprint('especes', __name__)
+
+
+@especes.route('/api/especes', methods=['GET'])
+def get_especes():
+    key = request.args.get("key")
+    especes = []
+    if key:
+        ## query equivaut à un select en sql
+        ## filter = where
+        especes = Espece.query.filter(
+            or_(Espece.id_espece.ilike("%" + key + "%"))
+            ).order_by(desc(Espece.cd_nom)). \
+            all() ## run de la requete
+    else:
+        especes = Espece.query.order_by(desc(Espece.cd_nom)).all()
+    especes = []
+    for esp in especes:
+        temp = esp.json()
+        especes.append(esp)
+    return especes
+    return jsonify(especes)
+    return jsonify([espece.json() for espece in especes])

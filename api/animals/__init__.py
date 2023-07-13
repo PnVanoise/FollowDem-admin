@@ -3,7 +3,7 @@ from models import Animal, AnimalDevice, db, AnimalAttribute, Device
 import traceback
 import json
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import func, desc, or_
+from sqlalchemy import func, desc, asc, or_
 from datetime import datetime
 from pypnusershub import routes as fnauth
 
@@ -11,20 +11,15 @@ animals = Blueprint('animals', __name__)
 
 
 @animals.route('/api/animals', methods=['GET'])
-@fnauth.check_auth(4) ## enlever la protection auth4 = admin pour les appels dans GPS3V
+# @fnauth.check_auth(4) ## enlever la protection auth4 = admin pour les appels dans GPS3V
 def get_animals():
     try:
         key = request.args.get("key")
         animals = []
         if key:
-            animals = Animal.query. \
-                filter(or_(Animal.name.ilike("%" + key + "%"))). \
-                order_by(desc(Animal.id_animal)). \
-                all()
+            animals = Animal.query.filter(or_(Animal.name.ilike("%" + key + "%"))).order_by(desc(Animal.id_animal)).all()
         else:
-            animals = Animal.query.\
-                order_by(desc(Animal.id_animal)). \
-                all()
+            animals = Animal.query.order_by(asc(Animal.name)).all()
         return jsonify([animal.json() for animal in animals])
     except Exception:
         traceback.print_exc()
