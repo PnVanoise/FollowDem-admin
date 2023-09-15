@@ -78,10 +78,11 @@ COMMENT ON TABLE followdem.t_animals IS 'Table contenant les animaux';
 
 CREATE TABLE followdem.t_especes (
     id_espece serial NOT NULL,
-    cd_nom character integer,
+    cd_nom integer,
     lb_nom character varying(50),
     nom_vern character varying(50),
-    lien_img text
+    lien_img text,
+    lien_fiche text
 );
 
 COMMENT ON TABLE followdem.t_especes IS 'Table contenant les especes';
@@ -230,20 +231,62 @@ ALTER TABLE ONLY followdem.t_gps_data
 ----------
 -- VIEW --
 ----------
-CREATE OR REPLACE VIEW followdem.v_animals_loc
-AS SELECT tgd.id_gps_data,
-    tgd.gps_date,
-    st_setsrid(st_makepoint(tgd.longitude::double precision, tgd.latitude::double precision), 4326) AS geom,
-    tgd.altitude,
+CREATE MATERIALIZED VIEW followdem.vm_animals_loc
+TABLESPACE pg_default
+AS WITH ranked_gps_data AS (
+         SELECT tgd.id_gps_data,
+            tgd.gps_date,
+            st_setsrid(st_makepoint(tgd.longitude::double precision, tgd.latitude::double precision), 4326) AS geom,
+            tgd.altitude,
+            va.name,
+            va.nom_vern,
+            va.attributs,
+            row_number() OVER (PARTITION BY (va.name::text) ORDER BY tgd.gps_date) AS row_num
+           FROM followdem.t_gps_data tgd
+             JOIN followdem.cor_animal_devices cad ON cad.id_device = tgd.id_device AND tgd.gps_date >= cad.date_start AND tgd.gps_date <= COALESCE(cad.date_end::timestamp with time zone, now())
+             JOIN followdem.v_animals va ON va.id_animal = cad.id_animal
+          WHERE tgd.accurate IS TRUE AND (va.nom_vern::text <> 'Aigle royal'::text OR tgd.gps_date <= (now() - '30 days'::interval))
+        )
+ SELECT ranked_gps_data.id_gps_data,
+    ranked_gps_data.gps_date,
+    ranked_gps_data.geom,
+    ranked_gps_data.altitude,
+    ranked_gps_data.name,
+    ranked_gps_data.nom_vern,
+    ranked_gps_data.attributs
+   FROM ranked_gps_data
+  WHERE
+        CASE
+            WHEN ranked_gps_data.nom_vern::text = 'Aigle royal'::text THEN (ranked_gps_data.row_num % 4::bigint) = 1
+            ELSE true
+        END
+  ORDER BY ranked_gps_data.name, ranked_gps_data.gps_date
+WITH DATA;
+
+-- View indexes:
+CREATE INDEX idx_val_date ON followdem.vm_animals_loc USING btree (gps_date);
+CREATE INDEX idx_val_geom ON followdem.vm_animals_loc USING gist (geom);
+CREATE UNIQUE INDEX idx_val_id ON followdem.vm_animals_loc USING btree (id_gps_data);
+CREATE INDEX idx_val_name ON followdem.vm_animals_loc USING btree (name);
+
+CREATE OR REPLACE VIEW followdem.v_animals
+AS SELECT ta.id_animal,
     ta.name,
-    ta.birth_year,
+    ta.id_espece,
     te.nom_vern,
-    array_agg((la.attribute::text || ':'::text) || caa.value::text) AS attributs
-   FROM followdem.t_gps_data tgd
-     JOIN followdem.cor_animal_devices cad ON cad.id_device = tgd.id_device AND tgd.gps_date >= cad.date_start AND tgd.gps_date <= COALESCE(cad.date_end::timestamp with time zone, now())
-     JOIN followdem.t_animals ta ON ta.id_animal = cad.id_animal
-     JOIN followdem.t_especes te ON te.id_espece = ta.id_espece
-     JOIN followdem.cor_animal_attributes caa ON caa.id_animal = ta.id_animal
+    ta.birth_year,
+    ta.capture_date,
+    date_part('YEAR'::text, ta.capture_date)::integer AS capture_year,
+    min(cad.date_start) AS date_debut_suivi,
+        CASE
+            WHEN ta.active IS TRUE THEN NULL::timestamp without time zone
+            ELSE COALESCE(max(cad.date_end), ta.death_date)
+        END AS date_fin_suivi,
+    ta.comment,
+    array_append(array_agg((la.attribute::text || ':'::text) || caa.value::text), 'fill: '::text || ('#'::text || lpad(to_hex(floor(random() * (256 * 256 * 256 - 1)::double precision)::integer), 6, '0'::text))) AS attributs
+   FROM followdem.t_animals ta
+     JOIN followdem.cor_animal_attributes caa ON ta.id_animal = caa.id_animal
+     JOIN followdem.cor_animal_devices cad ON cad.id_animal = ta.id_animal
      JOIN followdem.lib_attributes la ON la.id_attribute = caa.id_attribute
-  WHERE ta.active IS TRUE
-  GROUP BY tgd.id_gps_data, tgd.gps_date, tgd.latitude, tgd.longitude, tgd.altitude, ta.name, ta.birth_year, te.nom_vern;
+     JOIN followdem.t_especes te ON te.id_espece = ta.id_espece
+  GROUP BY ta.id_animal, ta.name, ta.id_espece, ta.birth_year, ta.capture_date, (date_part('YEAR'::text, ta.capture_date)), ta.death_date, ta.comment, te.nom_vern;

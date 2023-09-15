@@ -189,6 +189,7 @@ class Espece(db.Model):
     lb_nom = db.Column(db.String(50))
     nom_vern = db.Column(db.String(50))
     lien_img = db.Column(db.Text())
+    lien_fiche = db.Column(db.Text())
 
     def json(self):
         return {
@@ -196,7 +197,8 @@ class Espece(db.Model):
             'cd_nom': self.cd_nom,
             'lb_nom': self.lb_nom,
             'nom_vern': self.nom_vern,
-            'lien_img':self.lien_img
+            'lien_img': self.lien_img,
+            'lien_fiche': self.lien_fiche
         }
 
 
@@ -217,18 +219,19 @@ class Logs(db.Model):
         }
     
 # Vue dans postgresql des localisations d'animaux actifs
-class AnimalsLoc(db.Model):
-    __tablename__ = 'v_animals_loc'
+class V_AnimalsLoc(db.Model):
+    __tablename__ = 'vm_animals_loc'
     __table_args__ = {'extend_existing': True, u'schema': 'followdem'}
 
     id_gps_data = db.Column(db.Integer(), primary_key=True)
     gps_date = db.Column(db.DateTime)
     altitude = db.Column(db.Float())
     name = db.Column(db.String(50))
-    birth_year = db.Column(db.Integer())
     nom_vern = db.Column(db.String(50))
     attributs = db.Column(db.Text())
     geom = db.Column(Geometry('POINT'))
+
+    inherit_cache = True
 
     def json(self):
         return {
@@ -236,13 +239,12 @@ class AnimalsLoc(db.Model):
             'gps_date': str(self.gps_date),
             'altitude':self.altitude,
             'name':self.name,
-            'birth_year':self.birth_year,
             'nom_vern':self.nom_vern,
             'attributs':self.attributs
         }
 
 # Vue dans postgresql des animaux actifs avec attribut random color (pour éviter de l'intégrer en dur)
-class AnimalsColor(db.Model):
+class V_Animals(db.Model):
 
     __tablename__ = 'v_animals'
     __table_args__ = {'extend_existing': True, u'schema': 'followdem'}
@@ -250,9 +252,12 @@ class AnimalsColor(db.Model):
     id_animal = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     id_espece = db.Column(db.Integer())
+    nom_vern = db.Column(db.String(50))
     birth_year = db.Column(db.Integer())
     capture_date = db.Column(db.DateTime)
-    death_date = db.Column(db.DateTime,  nullable=True)
+    capture_year = db.Column(db.Integer)
+    date_debut_suivi = db.Column(db.DateTime)
+    date_fin_suivi = db.Column(db.DateTime)
     comment = db.Column(db.Text())
     attributs = db.Column(db.Text())
 
@@ -261,10 +266,12 @@ class AnimalsColor(db.Model):
             'id_animal':self.id_animal,
             'name':self.name,
             'id_espece':self.id_espece,
+            'nom_vern':self.nom_vern,
             'birth_year':self.birth_year,
             'capture_date':self.capture_date,
-            'death_date':self.death_date,
+            'capture_year': self.capture_year,
+            'date_debut_suivi': self.date_debut_suivi,
+            'date_fin_suivi': self.date_fin_suivi,
             'comment':self.comment,
             'attributs': self.attributs
-            #'attributs':[attribut.json() for attribut in self.attributs]
         }

@@ -1,5 +1,5 @@
 from flask import (Blueprint, jsonify, request, Flask)
-from models import db, AnimalsColor
+from models import db, V_Animals
 import traceback
 import json
 from sqlalchemy.exc import IntegrityError
@@ -7,16 +7,16 @@ from sqlalchemy import func, desc, asc, or_, and_
 from datetime import datetime
 from pypnusershub import routes as fnauth
 
-animals_color = Blueprint('animals_color', __name__)
+v_animals = Blueprint('v_animals', __name__)
 
-@animals_color.route('/api/animals_color', methods=['GET'])
-def get_animals_color():
+@v_animals.route('/api/v_animals', methods=['GET'])
+def get_v_animals():
 
-    query = AnimalsColor.query
+    query = V_Animals.query
     
-    animals_color = query.order_by(asc(AnimalsColor.name)).all()
+    v_animals = query.order_by(asc(V_Animals.name)).all()
 
-    for item in animals_color:
+    for item in v_animals:
         # Créer un dictionnaire pour stocker les attributs
         attributes = {}
         if item.attributs is not None:
@@ -32,7 +32,7 @@ def get_animals_color():
         item.attributs = attributes
 
     # Convertir les données modifiées en JSON
-    modified_animals_color = jsonify([anicol.json() for anicol in animals_color])
+    modified_v_animals = jsonify([anicol.json() for anicol in v_animals])
 
     # return jsonify([anicol.json() for anicol in animals_color])
-    return modified_animals_color
+    return modified_v_animals
