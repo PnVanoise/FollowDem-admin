@@ -231,6 +231,7 @@ ALTER TABLE ONLY followdem.t_gps_data
 ----------
 -- VIEW --
 ----------
+
 CREATE MATERIALIZED VIEW followdem.vm_animals_loc
 TABLESPACE pg_default
 AS WITH ranked_gps_data AS (
@@ -238,6 +239,7 @@ AS WITH ranked_gps_data AS (
             tgd.gps_date,
             st_setsrid(st_makepoint(tgd.longitude::double precision, tgd.latitude::double precision), 4326) AS geom,
             tgd.altitude,
+            va.id_animal,
             va.name,
             va.nom_vern,
             va.attributs,
@@ -251,6 +253,7 @@ AS WITH ranked_gps_data AS (
     ranked_gps_data.gps_date,
     ranked_gps_data.geom,
     ranked_gps_data.altitude,
+    ranked_gps_data.id_animal,
     ranked_gps_data.name,
     ranked_gps_data.nom_vern,
     ranked_gps_data.attributs
@@ -267,6 +270,7 @@ WITH DATA;
 CREATE INDEX idx_val_date ON followdem.vm_animals_loc USING btree (gps_date);
 CREATE INDEX idx_val_geom ON followdem.vm_animals_loc USING gist (geom);
 CREATE UNIQUE INDEX idx_val_id ON followdem.vm_animals_loc USING btree (id_gps_data);
+CREATE INDEX idx_val_id_animal ON followdem.vm_animals_loc USING btree (id_animal);
 CREATE INDEX idx_val_name ON followdem.vm_animals_loc USING btree (name);
 
 CREATE OR REPLACE VIEW followdem.v_animals
@@ -277,11 +281,8 @@ AS SELECT ta.id_animal,
     ta.birth_year,
     ta.capture_date,
     date_part('YEAR'::text, ta.capture_date)::integer AS capture_year,
-    min(cad.date_start) AS date_debut_suivi,
-        CASE
-            WHEN ta.active IS TRUE THEN NULL::timestamp without time zone
-            ELSE COALESCE(max(cad.date_end), ta.death_date)
-        END AS date_fin_suivi,
+    to_char(min(cad.date_start), 'DD/MM/YYYY'::text) AS date_debut_suivi,
+    COALESCE(to_char(max(cad.date_end), 'DD/MM/YYYY'::text), to_char(ta.death_date, 'DD/MM/YYYY'::text)) AS date_fin_suivi,
     ta.comment,
     array_append(array_agg((la.attribute::text || ':'::text) || caa.value::text), 'fill: '::text || ('#'::text || lpad(to_hex(floor(random() * (256 * 256 * 256 - 1)::double precision)::integer), 6, '0'::text))) AS attributs
    FROM followdem.t_animals ta
@@ -289,4 +290,5 @@ AS SELECT ta.id_animal,
      JOIN followdem.cor_animal_devices cad ON cad.id_animal = ta.id_animal
      JOIN followdem.lib_attributes la ON la.id_attribute = caa.id_attribute
      JOIN followdem.t_especes te ON te.id_espece = ta.id_espece
-  GROUP BY ta.id_animal, ta.name, ta.id_espece, ta.birth_year, ta.capture_date, (date_part('YEAR'::text, ta.capture_date)), ta.death_date, ta.comment, te.nom_vern;
+  GROUP BY ta.id_animal, ta.name, ta.id_espece, ta.birth_year, ta.capture_date, (date_part('YEAR'::text, ta.capture_date)), ta.death_date, ta.comment, te.nom_vern
+  ORDER BY te.nom_vern, (COALESCE(to_char(max(cad.date_end), 'DD/MM/YYYY'::text), to_char(ta.death_date, 'DD/MM/YYYY'::text))) DESC, ta.name;

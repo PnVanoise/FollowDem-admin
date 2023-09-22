@@ -226,6 +226,7 @@ class V_AnimalsLoc(db.Model):
     id_gps_data = db.Column(db.Integer(), primary_key=True)
     gps_date = db.Column(db.DateTime)
     altitude = db.Column(db.Float())
+    id_animal = db.Column(db.Integer())
     name = db.Column(db.String(50))
     nom_vern = db.Column(db.String(50))
     attributs = db.Column(db.Text())
@@ -238,6 +239,7 @@ class V_AnimalsLoc(db.Model):
             'id_gps_data': self.id_gps_data,
             'gps_date': str(self.gps_date),
             'altitude':self.altitude,
+            'id_animal': self.id_animal,
             'name':self.name,
             'nom_vern':self.nom_vern,
             'attributs':self.attributs

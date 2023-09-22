@@ -14,7 +14,7 @@ def get_v_animals():
 
     query = V_Animals.query
     
-    v_animals = query.order_by(asc(V_Animals.name)).all()
+    v_animals = query.all()
 
     for item in v_animals:
         # Créer un dictionnaire pour stocker les attributs
@@ -34,5 +34,4 @@ def get_v_animals():
     # Convertir les données modifiées en JSON
     modified_v_animals = jsonify([anicol.json() for anicol in v_animals])
 
-    # return jsonify([anicol.json() for anicol in animals_color])
     return modified_v_animals

@@ -14,14 +14,13 @@ v_animals_loc = Blueprint('v_animals_loc', __name__)
 @v_animals_loc.route('/api/v_animals_loc', methods=['GET'])
 def get_v_animals_loc():
 
-    name = request.args.get('name')
-    # last_day = int(request.args.get('last_day', 15)) # par défaut 15 derniers jours
+    id = request.args.get('id_animal')
     last_day = request.args.get('last_day')
 
     query = db.session.query(V_AnimalsLoc, func.ST_AsGeoJSON(V_AnimalsLoc.geom))
 
-    if name:
-        query = query.filter(V_AnimalsLoc.name == name)
+    if id:
+        query = query.filter(V_AnimalsLoc.id_animal == id)
     if last_day:
         last_day = int(last_day)
         end_date = datetime.today()
@@ -45,9 +44,7 @@ def get_v_animals_loc():
                         key, value = key_value
                         attributes[key] = value
         item[0].attributs = attributes
-        
-        # print(type(item[0].gps_date))
-        
+                
         
         feature = {
             'type': 'Feature',

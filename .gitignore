@@ -53,3 +53,4 @@ conf.py
 settings.ini
 var/log/*.log
 
+GPS3vallees-admin.pid

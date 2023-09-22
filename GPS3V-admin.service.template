@@ -1,0 +1,12 @@
+[Unit]
+Description=Gunicorn instance to serve GPS3Vallees Admin
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=portail
+ExecStart=/home/portail/GPS3vallees-admin/gunicorn_start.sh
+[Install]
+WantedBy=multi-user.target
