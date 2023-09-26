@@ -1,6 +1,6 @@
 app_name=GPS3vallees-admin
 venv_dir=venv
 gun_num_workers=4
-gun_host=0.0.0.0
+gun_host=127.0.0.1
 gun_port=5000
 gun_timeout=30
