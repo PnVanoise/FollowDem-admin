@@ -13,10 +13,10 @@ Installation de l'environnement logiciel
 
     sudo apt-get update
     sudo apt-get upgrade
-    sudo apt-get install postgresql-12
-    sudo apt-get install postgis postgresql-12-postgis-3
-    sudo apt-get install python3.6
-    sudo apt-get install python3.6-venv
+    sudo apt-get install postgresql-15
+    sudo apt-get install postgis postgresql-15-postgis-3
+    sudo apt-get install python3
+    sudo apt-get install python3-venv
 
 
 

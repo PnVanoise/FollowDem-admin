@@ -1,12 +1,12 @@
 <VirtualHost *:80>
-   ServerName gps3vallees.vanoise-parcnational.fr
-   Alias / "/home/portail/Portail-3-vallees/app/dist/"
-   <Directory "/home/portail/Portail-3-vallees/app/dist/">
+   ServerName mondomaine.fr
+   Alias / "/home/user/Portail-3-vallees/app/dist/"
+   <Directory "/home/user/Portail-3-vallees/app/dist/">
        Options Indexes FollowSymLinks
        AllowOverride All
        Require all granted
    </Directory>
-   <Location /home/portail/GPS3vallees-admin/api>
+   <Location /home/user/GPS3vallees-admin/api>
         ProxyPass http://0.0.0.0:5000
         ProxyPassReverse http://0.0.0.0:5000
    </Location>
