@@ -7,6 +7,6 @@ Type=simple
 Restart=always
 RestartSec=1
 User=portail
-ExecStart=/home/portail/GPS3vallees-admin/gunicorn_start.sh
+ExecStart=/home/user/GPS3vallees-admin/gunicorn_start.sh
 [Install]
 WantedBy=multi-user.target

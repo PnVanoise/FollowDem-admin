@@ -4,7 +4,6 @@ import traceback
 import json
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, desc, asc, or_, and_
-from geoalchemy2 import func as geo_func
 from datetime import datetime, timedelta
 from pypnusershub import routes as fnauth
 

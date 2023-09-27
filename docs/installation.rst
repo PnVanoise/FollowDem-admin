@@ -75,8 +75,9 @@ Copier et éditer le fichier de configuration ``./conf.py.tpl``.
 
 ::
 
-  python3.6 -m venv venv
+  python3 -m venv venv
   source venv/bin/activate
+  pip install --upgrade pip
   pip install -r ./requirements.txt
   deactivate
 
