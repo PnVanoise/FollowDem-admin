@@ -294,3 +294,36 @@ CREATE UNIQUE INDEX idx_val_id ON followdem.vm_animals_loc USING btree (id_gps_d
 CREATE INDEX idx_val_id_animal ON followdem.vm_animals_loc USING btree (id_animal);
 CREATE INDEX idx_val_name ON followdem.vm_animals_loc USING btree (name);
 
+-------------------
+-- DATA EXEMPLES --
+-------------------
+
+INSERT INTO followdem.t_especes (cd_nom,lb_nom,nom_vern,lien_img,lien_fiche) VALUES
+	 (6315,'','Hola','https://www.meme-arsenal.com/memes/065f57c3412caa583c14038de6fdb90d.jpg','https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+
+INSERT INTO followdem.t_animals ("name",id_espece,birth_year,capture_date,death_date,"comment",active) VALUES
+	 ('Que tal',1,2023,'2023-08-28 00:00:00',NULL,NULL,true);
+
+INSERT INTO followdem.lib_device_type (device_type) VALUES
+	 ('Ornitela');
+
+INSERT INTO followdem.t_devices (ref_device,id_device_type,"comment") VALUES
+	 ('2023',1,NULL);
+
+INSERT INTO followdem.lib_attributes ("attribute",value_list,attribute_type,"order") VALUES
+	 ('sex_libelle','male;femelle','varchar(50)',1),
+	 ('age_libelle','adulte;immature;indetermine','varchar(50)',2);
+
+INSERT INTO followdem.cor_animal_devices (id_animal,id_device,date_start,date_end,"comment") VALUES
+	 (1,1,'2023-08-28 00:00:00',NULL,NULL);
+
+INSERT INTO followdem.cor_animal_attributes (id_attribute,id_animal,value) VALUES
+	 (1,1,'femelle'),
+	 (2,1,'immature');
+
+INSERT INTO followdem.t_gps_data (id_device,gps_date,ttf,temperature,sat_number,hdop,latitude,longitude,altitude,dimension,accurate) VALUES
+	 (1,'2023-09-02 05:00:00',NULL,NULL,NULL,NULL,46.254231,3.867687,NULL,NULL,true),
+	 (1,'2023-09-10 12:00:00',NULL,NULL,NULL,NULL,44.700250,2.006096,NULL,NULL,true),
+	 (1,'2023-09-20 22:00:00',NULL,NULL,NULL,NULL,49.659419,2.727448,NULL,NULL,true);
+
+REFRESH MATERIALIZED VIEW followdem.vm_animals_loc WITH DATA;
