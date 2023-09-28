@@ -218,7 +218,7 @@ class Logs(db.Model):
             'log': self.log
         }
     
-# Vue dans postgresql des localisations d'animaux actifs
+# Vue dans postgresql des localisations d'animaux
 class V_AnimalsLoc(db.Model):
     __tablename__ = 'vm_animals_loc'
     __table_args__ = {'extend_existing': True, u'schema': 'followdem'}
@@ -245,7 +245,7 @@ class V_AnimalsLoc(db.Model):
             'attributs':self.attributs
         }
 
-# Vue dans postgresql des animaux actifs avec attribut random color (pour éviter de l'intégrer en dur)
+# Vue dans postgresql des animaux avec attribut random color (pour éviter de l'intégrer en dur)
 class V_Animals(db.Model):
 
     __tablename__ = 'v_animals'
