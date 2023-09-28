@@ -6,7 +6,7 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
-User=portail
+User=user
 ExecStart=/home/user/GPS3vallees-admin/gunicorn_start.sh
 [Install]
 WantedBy=multi-user.target

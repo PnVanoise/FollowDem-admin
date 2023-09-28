@@ -2,6 +2,7 @@
 -- PostgreSQL database
 --
 
+CREATE EXTENSION IF NOT EXISTS postgis; 
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -198,7 +199,7 @@ CREATE UNIQUE INDEX device_type_idx ON followdem.lib_device_type (LOWER(device_t
 CREATE UNIQUE INDEX attribute_idx ON followdem.lib_attributes (LOWER(attribute));
 CREATE UNIQUE INDEX name_unique_idx ON followdem.t_animals (LOWER(name));
 CREATE UNIQUE INDEX ref_device_unique_idx ON followdem.t_devices (LOWER(ref_device));
-CREATE UNIQUE INDEX cd_nom_unique_idx ON followdem.t_especes (LOWER(cd_nom));
+CREATE UNIQUE INDEX cd_nom_unique_idx ON followdem.t_especes (cd_nom);
 
 
 -----------------
@@ -232,12 +233,32 @@ ALTER TABLE ONLY followdem.t_gps_data
 -- VIEW --
 ----------
 
+CREATE OR REPLACE VIEW followdem.v_animals
+AS SELECT ta.id_animal,
+    ta.name,
+    ta.id_espece,
+    te.nom_vern,
+    ta.birth_year,
+    ta.capture_date,
+    date_part('YEAR'::text, ta.capture_date)::integer AS capture_year,
+    to_char(min(cad.date_start), 'DD/MM/YYYY'::text) AS date_debut_suivi,
+    COALESCE(to_char(max(cad.date_end), 'DD/MM/YYYY'::text), to_char(ta.death_date, 'DD/MM/YYYY'::text)) AS date_fin_suivi,
+    ta.comment,
+    array_append(array_agg((la.attribute::text || ':'::text) || caa.value::text), 'fill: '::text || ('#'::text || lpad(to_hex(floor(random() * (256 * 256 * 256 - 1)::double precision)::integer), 6, '0'::text))) AS attributs
+   FROM followdem.t_animals ta
+     JOIN followdem.cor_animal_attributes caa ON ta.id_animal = caa.id_animal
+     JOIN followdem.cor_animal_devices cad ON cad.id_animal = ta.id_animal
+     JOIN followdem.lib_attributes la ON la.id_attribute = caa.id_attribute
+     JOIN followdem.t_especes te ON te.id_espece = ta.id_espece
+  GROUP BY ta.id_animal, ta.name, ta.id_espece, ta.birth_year, ta.capture_date, (date_part('YEAR'::text, ta.capture_date)), ta.death_date, ta.comment, te.nom_vern
+  ORDER BY te.nom_vern, (COALESCE(to_char(max(cad.date_end), 'DD/MM/YYYY'::text), to_char(ta.death_date, 'DD/MM/YYYY'::text))) DESC, ta.name;
+
 CREATE MATERIALIZED VIEW followdem.vm_animals_loc
 TABLESPACE pg_default
 AS WITH ranked_gps_data AS (
          SELECT tgd.id_gps_data,
             tgd.gps_date,
-            st_setsrid(st_makepoint(tgd.longitude::double precision, tgd.latitude::double precision), 4326) AS geom,
+            public.st_setsrid(public.st_makepoint(tgd.longitude::double precision, tgd.latitude::double precision), 4326) AS geom,
             tgd.altitude,
             va.id_animal,
             va.name,
@@ -273,22 +294,3 @@ CREATE UNIQUE INDEX idx_val_id ON followdem.vm_animals_loc USING btree (id_gps_d
 CREATE INDEX idx_val_id_animal ON followdem.vm_animals_loc USING btree (id_animal);
 CREATE INDEX idx_val_name ON followdem.vm_animals_loc USING btree (name);
 
-CREATE OR REPLACE VIEW followdem.v_animals
-AS SELECT ta.id_animal,
-    ta.name,
-    ta.id_espece,
-    te.nom_vern,
-    ta.birth_year,
-    ta.capture_date,
-    date_part('YEAR'::text, ta.capture_date)::integer AS capture_year,
-    to_char(min(cad.date_start), 'DD/MM/YYYY'::text) AS date_debut_suivi,
-    COALESCE(to_char(max(cad.date_end), 'DD/MM/YYYY'::text), to_char(ta.death_date, 'DD/MM/YYYY'::text)) AS date_fin_suivi,
-    ta.comment,
-    array_append(array_agg((la.attribute::text || ':'::text) || caa.value::text), 'fill: '::text || ('#'::text || lpad(to_hex(floor(random() * (256 * 256 * 256 - 1)::double precision)::integer), 6, '0'::text))) AS attributs
-   FROM followdem.t_animals ta
-     JOIN followdem.cor_animal_attributes caa ON ta.id_animal = caa.id_animal
-     JOIN followdem.cor_animal_devices cad ON cad.id_animal = ta.id_animal
-     JOIN followdem.lib_attributes la ON la.id_attribute = caa.id_attribute
-     JOIN followdem.t_especes te ON te.id_espece = ta.id_espece
-  GROUP BY ta.id_animal, ta.name, ta.id_espece, ta.birth_year, ta.capture_date, (date_part('YEAR'::text, ta.capture_date)), ta.death_date, ta.comment, te.nom_vern
-  ORDER BY te.nom_vern, (COALESCE(to_char(max(cad.date_end), 'DD/MM/YYYY'::text), to_char(ta.death_date, 'DD/MM/YYYY'::text))) DESC, ta.name;
